@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Stop hook for claude-ensemble.
+ * Stop hook for ensemble.
  *
  * - Stateless: no arm/disarm, planner state, or agent counters.
  * - Runs lint only, and only when the changed files affect lint (not merely a dirty repo).

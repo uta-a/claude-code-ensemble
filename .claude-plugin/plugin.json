@@ -1,5 +1,5 @@
 {
-  "name": "claude-ensemble",
+  "name": "ensemble",
   "version": "1.0.0",
   "description": "Adaptive specialist ensemble for Claude Code: delegate only when specialist context or isolated heavy validation adds value.",
   "author": {

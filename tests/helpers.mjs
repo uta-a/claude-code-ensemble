@@ -24,7 +24,7 @@ export const NO_GIT = spawnSync("git", ["--version"]).status === 0 ? false : "gi
  * @param {import("node:test").TestContext} t
  */
 export function createFixture(t) {
-  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "claude-ensemble-")));
+  const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ensemble-")));
   t.after(() => removeDir(dir));
   return dir;
 }

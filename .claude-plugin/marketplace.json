@@ -4,11 +4,11 @@
     "name": "uta-a"
   },
   "metadata": {
-    "description": "Marketplace for the claude-ensemble plugin."
+    "description": "Marketplace for the ensemble plugin."
   },
   "plugins": [
     {
-      "name": "claude-ensemble",
+      "name": "ensemble",
       "source": "./",
       "description": "Adaptive specialist ensemble for Claude Code: delegate only when specialist context or isolated heavy validation adds value."
     }

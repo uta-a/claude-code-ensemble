@@ -1,6 +1,6 @@
 ## specialist ensemble の使い方
 
-claude-ensemble は adaptive specialist ensemble として使う。委譲は手段であって工程ではない。固定パイプラインを作らず、そのタスクで専門家を使う価値が明確な場合だけ委譲する。迷ったら委譲しない。
+ensemble は adaptive specialist ensemble として使う。委譲は手段であって工程ではない。固定パイプラインを作らず、そのタスクで専門家を使う価値が明確な場合だけ委譲する。迷ったら委譲しない。
 
 ### 委譲しない
 - 変更が小さく、意図と触る場所が明確なもの

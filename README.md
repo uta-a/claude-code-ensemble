@@ -1,11 +1,11 @@
-# claude-ensemble
+# ensemble
 
 Claude Code で必要な specialist だけを必要なときに呼ぶ、adaptive specialist ensemble の最小構成。
 固定の工程や planner を通すのではなく、親エージェントがタスクの性質を見て explore / architect / implementer / test-runner / reviewer を選ぶ。委譲そのものをワークフロー化せず、直接やる方が速く確実なら直接やる。
 
 ## 設計方針
 
-claude-ensemble が最適化するのは「エージェント数」ではなく、専門化による文脈分離と検証コストの配置。
+ensemble が最適化するのは「エージェント数」ではなく、専門化による文脈分離と検証コストの配置。
 
 | specialist | 起動する条件 | 起動しない例 |
 | :-- | :-- | :-- |
@@ -22,7 +22,7 @@ claude-ensemble が最適化するのは「エージェント数」ではなく�
 ## インストール
 
 plugin として導入する。`~/.claude/` へ agents や hooks を手動でコピーする必要はない。
-hook は `hooks/hooks.json` で `${CLAUDE_PLUGIN_ROOT}` 基準に登録される。エージェントは `claude-ensemble:explore` のように名前空間付きで提供されるので、`~/.claude/agents/` にある同名エージェントや他の plugin のエージェントを上書きしない。
+hook は `hooks/hooks.json` で `${CLAUDE_PLUGIN_ROOT}` 基準に登録される。エージェントは `ensemble:explore` のように名前空間付きで提供されるので、`~/.claude/agents/` にある同名エージェントや他の plugin のエージェントを上書きしない。
 以前 `~/.claude/` に手動で配置していた場合は、`~/.claude/settings.json` にある format.mjs / check.mjs の hooks 登録、`~/.claude/hooks/` の該当ファイル、`~/.claude/agents/` にコピーした ensemble のエージェントを削除する。残したままだと hook が二重に走る。
 
 ### 前提条件
@@ -37,7 +37,7 @@ hook は `hooks/hooks.json` で `${CLAUDE_PLUGIN_ROOT}` 基準に登録される
 
 ```
 /plugin marketplace add uta-a/claude-code-ensemble
-/plugin install claude-ensemble@uta-a-ensemble
+/plugin install ensemble@uta-a-ensemble
 ```
 
 インストールせずに試すだけなら、clone したディレクトリを直接読み込める。
@@ -56,11 +56,11 @@ clone したディレクトリをローカル marketplace として登録する�
 ### アンインストール
 
 ```
-/plugin uninstall claude-ensemble@uta-a-ensemble
+/plugin uninstall ensemble@uta-a-ensemble
 /plugin marketplace remove uta-a-ensemble
 ```
 
-一時的に止めたいだけなら `/plugin disable claude-ensemble@uta-a-ensemble` で無効化する。
+一時的に止めたいだけなら `/plugin disable ensemble@uta-a-ensemble` で無効化する。
 CLAUDE.md に追記した節は自動では消えないので、手動で削除する。
 
 ## モデル
@@ -122,6 +122,6 @@ node --test
 
 ## orchestra との関係
 
-claude-ensemble は orchestra の縮小版ではない。目的は固定オーケストレーションを小さく再現することではなく、必要な専門性だけを適応的に呼び出すことにある。
+ensemble は orchestra の縮小版ではない。目的は固定オーケストレーションを小さく再現することではなく、必要な専門性だけを適応的に呼び出すことにある。
 
-orchestra と併用はできるが、設計思想は別物として扱う。エージェントは `claude-ensemble:` の名前空間付きになるので、orchestra やユーザー定義のエージェントを上書きすることはない。ただし implementer、reviewer など同種のエージェントと役割が重なり、どれが呼ばれるかが曖昧になる。併用するなら片方を無効化しておくのが無難。
+orchestra と併用はできるが、設計思想は別物として扱う。エージェントは `ensemble:` の名前空間付きになるので、orchestra やユーザー定義のエージェントを上書きすることはない。ただし implementer、reviewer など同種のエージェントと役割が重なり、どれが呼ばれるかが曖昧になる。併用するなら片方を無効化しておくのが無難。
