@@ -33,18 +33,20 @@ hook は `hooks/hooks.json` で `${CLAUDE_PLUGIN_ROOT}` 基準に登録される
 
 ### 手順
 
-インストールせずに試すだけなら、ディレクトリを直接読み込める。
+このリポジトリ自体が単一プラグインの marketplace（`uta-a-ensemble`）になっている。
 
 ```
-claude --plugin-dir /path/to/claude-ensemble
+/plugin marketplace add uta-a/claude-code-ensemble
+/plugin install claude-ensemble@uta-a-ensemble
 ```
 
-継続して使う場合は、単一プラグインのマーケットプレイスとして同梱してある `.claude-plugin/marketplace.json` を使い、このディレクトリをローカル marketplace として登録する。
+インストールせずに試すだけなら、clone したディレクトリを直接読み込める。
 
 ```
-/plugin marketplace add /path/to/claude-ensemble
-/plugin install claude-ensemble@claude-ensemble-local
+claude --plugin-dir /path/to/claude-code-ensemble
 ```
+
+clone したディレクトリをローカル marketplace として登録することもできる。その場合は `/plugin marketplace add /path/to/claude-code-ensemble` にする。
 
 ### CLAUDE.md への追記（任意）
 
@@ -54,11 +56,11 @@ claude --plugin-dir /path/to/claude-ensemble
 ### アンインストール
 
 ```
-/plugin uninstall claude-ensemble@claude-ensemble-local
-/plugin marketplace remove claude-ensemble-local
+/plugin uninstall claude-ensemble@uta-a-ensemble
+/plugin marketplace remove uta-a-ensemble
 ```
 
-一時的に止めたいだけなら `/plugin disable claude-ensemble@claude-ensemble-local` で無効化する。
+一時的に止めたいだけなら `/plugin disable claude-ensemble@uta-a-ensemble` で無効化する。
 CLAUDE.md に追記した節は自動では消えないので、手動で削除する。
 
 ## モデル
