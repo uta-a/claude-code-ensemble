@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const CHECK = path.join(here, "..", "hooks", "check.mjs");
 export const FORMAT = path.join(here, "..", "hooks", "format.mjs");
-export const MODE = path.join(here, "..", "hooks", "mode.mjs");
+export const REMIND = path.join(here, "..", "hooks", "remind.mjs");
 
 /** git が無い環境では、gitInit を使うテストを fail ではなく skip にする。 */
 export const NO_GIT = spawnSync("git", ["--version"]).status === 0 ? false : "git が見つからない";
