@@ -27,7 +27,7 @@ hook は `hooks/hooks.json` で `${CLAUDE_PLUGIN_ROOT}` 基準に登録される
 
 ### 前提条件
 
-- Node.js が PATH にあること（hook は `node` で実行される）
+- Node.js 22 以上が PATH にあること（hook は `node` で実行される。Jev による判定は stable な `fetch` と `AbortSignal.timeout` を使う）
 - Claude Code v2.1.271 以降。explore / test-runner は frontmatter の `omitClaudeMd` を使う。古い版では無言で無視され、この2つにも CLAUDE.md が渡る
 - Stop hook は git 管理下のプロジェクトでのみ働く。非 git のプロジェクトでは何もしない
 
@@ -72,6 +72,49 @@ plugin を入れている間はいつでも委譲モードになる。UserPrompt
 - 固定の工程（計画 → 実装 → 検証 → レビュー）は回さない。何を委譲するかは毎ターンその場で判断する
 - 止めたいときは `CLAUDE_ENSEMBLE_REMIND=0`（`false` / `off` / `no` も可）を設定するか、
   `/plugin disable ensemble@uta-a-ensemble` で plugin ごと無効化する
+
+## 委譲の判定: hooks/gate.mjs（Jev, opt-in）
+
+委譲が足りない側は remind.mjs が補う。逆に、直接やる方が速く確実な作業まで specialist に投げる過剰委譲を、PreToolUse hook（matcher: `Task|Agent`）で止める。
+委譲の依頼文を TypeSafe の [Jev](https://docs.typesafe.ai/)（確率を返す System One モデル）に判定させる。Jev が返すのは確率だけで、止めるかどうかは hook のコードが決める。
+
+既定では何もしない。`TYPESAFE_API_KEY` と `CLAUDE_ENSEMBLE_JEV` の両方が揃ったときだけ動く。
+
+| 環境変数 | 内容 |
+| :-- | :-- |
+| `CLAUDE_ENSEMBLE_JEV` | `off`（既定）/ `shadow`（判定とログだけ）/ `gate`（判定に従って止める） |
+| `TYPESAFE_API_KEY` | Jev の API キー。置き場所は下の注意を参照 |
+| `CLAUDE_ENSEMBLE_JEV_LOG` | JSONL ログのパス。指定しなければ何も書かない |
+| `CLAUDE_ENSEMBLE_JEV_STRIP_CODE` | `1` で ``` / ~~~ のフェンス付きコードブロックを除いて送る |
+| `CLAUDE_ENSEMBLE_JEV_BASE_URL` | API のベース URL（既定 `https://api.typesafe.ai/v1`）。https 必須、http は 127.0.0.1 / localhost / [::1] のみ。query / fragment / userinfo 付きは送らない |
+| `CLAUDE_ENSEMBLE_JEV_MODEL` | モデルの版（既定 `jev-1.13.0`）。`jev-latest` は解決先が変わり閾値がずれるので使わない |
+| `CLAUDE_ENSEMBLE_JEV_BUDGET_MS` | 応答待ちの上限（既定 3000、100〜5000 に丸める）。hooks.json の timeout は 10 秒 |
+
+- 判定するのは ensemble の specialist（`ensemble:explore` など5つ）への委譲だけ。general-purpose や他 plugin のエージェントは素通しする
+- 判定基準は `agents/*.md` の `description` をそのまま使う。基準の出所は一つだけ
+- 止める条件: 委譲の価値 `worth < 0.25` かつ 直接やる方が良い `direct > 0.7`。規模 `size` は記録のみ
+- 止めた理由文で override を案内する。依頼文の先頭に `override: <理由>` と書けば判定せずに通す。カウンターも状態ファイルも持たない
+- フェイルオープン: キーなし、時間切れ、429 / 529 などの HTTP エラー、壊れた応答では何も出さずに通す。Jev の障害で委譲が止まることは無い
+- ログ1行の項目: `ts` / `session_id` / `subagent_type` / `description`（Agent の短い説明）/ `brief_chars` / `worth` / `direct` / `size` / `decision`（`allow` / `deny` / `would-deny` / `override` / `error`）/ `status` か `error` / `model` / `mode`。**依頼文そのものは書かない**。ラベル付けは `description` と、`session_id` で引ける transcript を見て行う
+
+### 外部送信とキーの注意
+
+- 委譲の依頼文（ファイルパスやコード片を含み得る）が TypeSafe の API に送られる。有効にするのは送ってよいプロジェクトだけにする
+- 送るのは先頭 6000 文字まで。`CLAUDE_ENSEMBLE_JEV_STRIP_CODE=1` はフェンス付きコードだけを除き、本文中のパスや識別子は送られる
+- リダイレクトは追わない（転送先に依頼文やキーを再送しない）。3xx はエラーとして扱い、そのまま通す
+- `TYPESAFE_API_KEY` を `~/.claude/settings.json` の `env` に書かない。dotfiles などに同期・コミットされ得る。OS のユーザー環境変数に置く。モードやログパスなど機密でない変数は settings.json で良い
+- `CLAUDE_ENSEMBLE_JEV_BASE_URL` を変えると、キーもその宛先に送られる
+
+### 進め方と、gate に移す基準
+
+1. `shadow` + ログで運用し、`would-deny` が本当に止めるべき委譲だったかをラベル付けする
+2. ラベルが 50 件以上たまり、`would-deny` の適合率（止めた委譲のうち、本当に不要だった割合）が 90% 以上なら `gate` に移す。満たさなければこの機能は使わない
+3. `gate` に移した後、`override` の割合が高止まりする（目安 30% 超）なら、remind.mjs の後押しと綱引きになっている。`off` に戻す
+
+既知の限界:
+- Jev に見えるのは依頼文だけ。親が既に何を読んだかは分からないので、「直接やる方が速いか」の判定には限界がある
+- `shadow` でも、委譲のたびに最大で budget 分（既定 3 秒）の遅延が増える
+- override はモデル自身が付けられるので、強制力は弱い。状態を持たない代わりに受け入れている
 
 ## モデル
 
