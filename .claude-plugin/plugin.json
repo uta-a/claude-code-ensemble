@@ -1,6 +1,6 @@
 {
   "name": "ensemble",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Adaptive specialist ensemble for Claude Code: delegate only when specialist context or isolated heavy validation adds value.",
   "author": {
     "name": "uta-a"
