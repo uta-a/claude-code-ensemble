@@ -8,7 +8,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { spawn, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
@@ -16,7 +16,6 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 export const CHECK = path.join(here, "..", "hooks", "check.mjs");
 export const FORMAT = path.join(here, "..", "hooks", "format.mjs");
 export const REMIND = path.join(here, "..", "hooks", "remind.mjs");
-export const GATE = path.join(here, "..", "hooks", "gate.mjs");
 
 /** git が無い環境では、gitInit を使うテストを fail ではなく skip にする。 */
 export const NO_GIT = spawnSync("git", ["--version"]).status === 0 ? false : "git が見つからない";
@@ -82,27 +81,6 @@ export function runHook(script, input, { env } = {}) {
     encoding: "utf8",
     env: env ?? cleanEnv(),
     timeout: 60_000,
-  });
-}
-
-/**
- * hook を非同期に起動する。同じプロセスで立てたモックサーバに hook から接続させるときに使う
- * （spawnSync ではイベントループが止まり、サーバが応答できない）。
- */
-export function runHookAsync(script, input, { env, cwd } = {}) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [script], { env: env ?? cleanEnv(), cwd });
-    let stdout = "";
-    let stderr = "";
-    child.stdout.setEncoding("utf8").on("data", (d) => (stdout += d));
-    child.stderr.setEncoding("utf8").on("data", (d) => (stderr += d));
-    const timer = setTimeout(() => child.kill(), 60_000);
-    child.on("error", reject);
-    child.on("close", (status) => {
-      clearTimeout(timer);
-      resolve({ status, stdout, stderr });
-    });
-    child.stdin.end(JSON.stringify(input));
   });
 }
 
